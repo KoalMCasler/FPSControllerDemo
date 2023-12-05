@@ -13,6 +13,10 @@ public class FPS : MonoBehaviour
     void Start()
     {
         player = GetComponent<CharacterController>();
+        if(speedMultiplier < 2)
+        {
+            speedMultiplier = 2;
+        }
     }
 
     // Update is called once per frame
