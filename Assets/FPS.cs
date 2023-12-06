@@ -23,15 +23,23 @@ public class FPS : MonoBehaviour
     [SerializeField]
     private float sprintMultiplier;
     [SerializeField]
-    private int jumpForce;
+    private float crouchMultiplier;
     [SerializeField]
-    private bool isGrounded;
+    private int jumpForce;
     [SerializeField]
     private float gravity;
     [SerializeField]
     private float currentSpeed;
     [SerializeField]
     private bool isSprinting;
+    [SerializeField]
+    private bool isCrouching;
+    [SerializeField] 
+    private Transform groundCheck;
+    [SerializeField] 
+    private Transform roofCheck;
+    [SerializeField] 
+    private LayerMask ground;
     private Vector3 speedVector;
     [Header("Look Settings")]
     [SerializeField]
@@ -43,9 +51,12 @@ public class FPS : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        isCrouching = false;
+        isSprinting = false;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         playerController = GetComponent<CharacterController>();
+        playerController.includeLayers = LayerMask.NameToLayer("Ground");
         player = gameObject;
         fpsCamera = Camera.main;
         if(speedMultiplier < 2 || speedMultiplier > 8)
@@ -68,6 +79,10 @@ public class FPS : MonoBehaviour
         {
             sprintMultiplier = 1.5f;
         }
+        if(crouchMultiplier <= 0 || crouchMultiplier > 1)
+        {
+            crouchMultiplier = 0.75f;
+        }
     }
 
     // Update is called once per frame
@@ -79,10 +94,11 @@ public class FPS : MonoBehaviour
     }
     void ManageInput()
     {
+        // walk input
         walkInput = new Vector3(Input.GetAxis("Horizontal"),0f,Input.GetAxis("Vertical")).normalized;
         walkInput = transform.rotation * walkInput;
         // Gets Jump input
-        if(Input.GetButtonDown("Jump") /*&& isGrounded == true*/)
+        if(Input.GetButtonDown("Jump") && IsGrounded())
         {
             moveValue.y = jumpForce;
         }
@@ -90,6 +106,7 @@ public class FPS : MonoBehaviour
         {
             moveValue.y = gravity;
         }
+        // sprint input
         if(Input.GetButton("Sprint"))
         {
             isSprinting = true;
@@ -98,13 +115,33 @@ public class FPS : MonoBehaviour
         {
            isSprinting = false;
         }
-        if(isSprinting == true)
+        // crouch input
+        if(Input.GetButtonDown("Crouch"))
+        {
+            if(isCrouching == true && !IsUnderRoof())
+            {
+                isCrouching = false;
+            }
+            else
+            {
+                isCrouching = true;
+            }
+        }
+        // movement logic
+        if(isSprinting == true && isCrouching == false)
         {
             moveValue.x = walkInput.x * (speedMultiplier*sprintMultiplier);
             moveValue.z = walkInput.z * (speedMultiplier*sprintMultiplier);
         }
-        if(isSprinting == false)
+        if(isCrouching == true)
         {
+            playerController.height = 0.5f;
+            moveValue.x = walkInput.x * (speedMultiplier*crouchMultiplier);
+            moveValue.z = walkInput.z * (speedMultiplier*crouchMultiplier);
+        }
+        if(isSprinting == false && isCrouching == false)
+        {
+            playerController.height = 1.5f;
             moveValue.x = walkInput.x * speedMultiplier;
             moveValue.z = walkInput.z * speedMultiplier;
         }
@@ -125,5 +162,13 @@ public class FPS : MonoBehaviour
         // Tests player speed
         speedVector = playerController.velocity;
         currentSpeed = speedVector.magnitude;
+    }
+    bool IsGrounded()
+    {
+        return Physics.CheckSphere(groundCheck.position, .1f, ground);
+    }
+    bool IsUnderRoof()
+    {
+        return Physics.CheckSphere(roofCheck.position, .1f, ground);
     }
 }

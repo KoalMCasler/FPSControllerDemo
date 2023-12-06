@@ -37014,11 +37014,13 @@ MonoBehaviour:
   fpsCamera: {fileID: 330585545}
   speedMultiplier: 2
   sprintMultiplier: 2
+  crouchMultiplier: 0.75
   jumpForce: 20
   isGrounded: 0
   gravity: -3
   currentSpeed: 0
   isSprinting: 0
+  isCrouching: 0
   lookSensitivity: 5
   upDownLimit: 0
 --- !u!1660057539 &9223372036854775807
